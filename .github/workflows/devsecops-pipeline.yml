@@ -19,12 +19,24 @@ jobs:
         run: |
           curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
 
-      - name: Run Complete Trivy Scan on Juice Shop Image
+      
+      - name: Run Full Security Audit Table
         run: |
           trivy image \
             --scanners vuln,secret \
             --image-config-scanners misconfig \
             --severity MEDIUM,HIGH,CRITICAL \
             --exit-code 0 \
+            --format table \
+            bkimminich/juice-shop:latest
+
+      
+      - name: Enforce Quality Gate (Fail on CRITICAL)
+        run: |
+          trivy image \
+            --scanners vuln,secret \
+            --image-config-scanners misconfig \
+            --severity CRITICAL \
+            --exit-code 1 \
             --format table \
             bkimminich/juice-shop:latest

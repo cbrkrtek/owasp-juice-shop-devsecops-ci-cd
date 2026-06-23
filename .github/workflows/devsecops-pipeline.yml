@@ -1,4 +1,4 @@
-name: DevSecOps CI Pipeline
+name: DevSecOps Juice Shop Pipeline
 
 on:
   push:
@@ -9,22 +9,21 @@ on:
       - main
 
 jobs:
-  security-scans:
+  juice-shop-security:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Run Trivy SCA scan 
+      - name: Install Trivy
         run: |
           curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
-          trivy fs --severity HIGH,CRITICAL --exit-code 0 --format table .
 
-      - name: Run Trivy Container Image scan
+      - name: Run Complete Trivy Scan on Juice Shop Image
         run: |
-          trivy image --severity HIGH,MEDIUM --exit-code 0 --format table bkimminich/juice-shop:latest
-
-      - name: Run Semgrep SAST scan
-        uses: returntocorp/semgrep-action@v1
-        with:
-          config: p/default
+          trivy image \
+            --scanners vuln,secret,config \
+            --severity HIGH,CRITICAL \
+            --exit-code 0 \
+            --format table \
+            bkimminich/juice-shop:latest

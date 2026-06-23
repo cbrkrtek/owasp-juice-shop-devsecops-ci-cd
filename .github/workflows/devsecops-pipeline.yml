@@ -15,11 +15,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Run Trivy SCA scan (Direct via Script)
+      - name: Run Trivy SCA scan 
         run: |
           curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
-          
           trivy fs --severity HIGH,CRITICAL --exit-code 0 --format table .
+
+      - name: Run Trivy Container Image scan
+        run: |
+          trivy image --severity CRITICAL --exit-code 0 --format table bkimminich/juice-shop:latest
 
       - name: Run Semgrep SAST scan
         uses: returntocorp/semgrep-action@v1

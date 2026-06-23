@@ -22,7 +22,7 @@ jobs:
 
       - name: Run Trivy Container Image scan
         run: |
-          trivy image --severity CRITICAL --exit-code 0 --format table bkimminich/juice-shop:latest
+          trivy image --severity HIGH,MEDIUM --exit-code 0 --format table bkimminich/juice-shop:latest
 
       - name: Run Semgrep SAST scan
         uses: returntocorp/semgrep-action@v1

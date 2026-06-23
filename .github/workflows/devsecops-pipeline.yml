@@ -15,10 +15,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Run Trivy SCA scan (Direct)
+      - name: Run Trivy SCA scan (Direct via Script)
         run: |
-          wget https://github.com/aquasecurity/trivy/releases/download/v0.51.1/trivy_0.51.1_Linux-64bit.deb
-          sudo dpkg -i trivy_0.51.1_Linux-64bit.deb
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+          
           trivy fs --severity HIGH,CRITICAL --exit-code 0 --format table .
 
       - name: Run Semgrep SAST scan

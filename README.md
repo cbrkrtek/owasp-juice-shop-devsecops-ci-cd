@@ -1,45 +1,97 @@
-# OWASP Juice Shop: DevSecOps CI/CD Pipeline
+# 🛡️ OWASP Juice Shop DevSecOps CI/CD pipeline
 
-[![DevSecOps Pipeline](https://img.shields.io/badge/Security-Shift--Left-blueviolet?style=for-the-badge)](https://github.com/)
-[![AQUA Trivy](https://img.shields.io/badge/SCA%20%2F%20Container-Trivy-blue?style=flat-square)](https://aquasecurity.github.io/trivy/)
-[![Semgrep](https://img.shields.io/badge/SAST-Semgrep-darkgreen?style=flat-square)](https://semgrep.dev/)
-
-This repository demonstrates a production-ready **DevSecOps CI/CD Pipeline** built with GitHub Actions. It implements the **Shift-Left Security** philosophy by embedding automated security gates directly into the software development lifecycle (SDLC).
-
-As a testbed, this project uses a simulated environment of **OWASP Juice Shop** (intentionally vulnerable Node.js application) to showcase how security scanners detect, log, and block vulnerabilities before they reach production.
+This repository demonstrates a production-ready **DevSecOps Security Architecture** implemented for the **OWASP Juice Shop** application. The project showcases how to bridge the gap between automated shift-left security gates and dynamic, real-world exploitation testing.
 
 ---
 
-## Pipeline Architecture
+## 📊 Security Executive Summary
 
-The pipeline is structured into logical stages to ensure fast feedback loops for developers:
-
-1. **Static Analysis (SAST):** Code scanning using **Semgrep** to find patterns leading to injection, broken authentication, or insecure configurations.
-2. **Software Composition Analysis (SCA):** Dependency vulnerability scanning via **Trivy** to intercept known CVEs in open-source libraries.
-3. **Container Security:** *(In Progress)* Automated scanning of Docker image layers for OS-level vulnerabilities.
-4. **Dynamic Application Testing (DAST):** *(In Progress)* Testing the running application against web attacks using OWASP ZAP.
-
----
-
-## Security Tools Integrated
-
-| Tool | Type | Target | Gate Condition (Fail-on) |
-| :--- | :--- | :--- | :--- |
-| **Semgrep** | SAST | Source Code (`.js`, `.ts`) | Custom Rules / Errors |
-| **Trivy (FS)** | SCA | `package.json` dependencies | `CRITICAL` & `HIGH` vulnerabilities |
-| **Trivy (Image)**| Container | Docker Layers | `CRITICAL` vulnerabilities |
+| Metrics & Gates | Status / Result | Target Objective |
+| :--- | :--- | :--- |
+| **CI/CD Quality Gate** |  **FAILED (Expected)** | Block deployment if any `CRITICAL` vulnerability is found |
+| **SCA / Vulnerability Count** | **63 CVEs Found** (5 Critical, 35 High) | Base OS & Dependency vetting |
+| **Hardcoded Secrets** |  **2 Active Leaks Trapped** | Eliminate credential leakage in container layers |
+| **DAST Flaws Validated** |  **3 High/Medium Exploits** | Verify runtime risks (SQLi, CORS, Missing CSP) |
 
 ---
 
-## Vulnerability Management & Risk Acceptance
+## Phase 1: Automated DevSecOps CI/CD Pipeline
 
-In a real-world DevSecOps culture, security should not blindly block development. This project demonstrates advanced scanner configuration:
-* **False Positives Handling:** Utilizing ignore configs (e.g., `.trivyignore`) to whitelist acceptable business risks.
-* **Alert Thresholds:** The pipeline is configured to fail (`exit code 1`) *only* on actionable, high-severity risks, preventing pipeline fatigue.
+The first defense line is built using **GitHub Actions**, acting as a strict **Quality Gate**. Instead of scanning static application code, the pipeline audits the finalized infrastructure: the container images and orchestration configurations.
+
+### Key Pipeline Mechanisms:
+1. **SCA (Software Composition Analysis):** Scans the `bkimminich/juice-shop` container layers for public CVEs using **Trivy**.
+2. **Secret Detection:** Inspects embedded files for asymmetric keys and authorization tokens.
+3. **Automated Enforcement:** Configured with `--exit-code 1` to intentionally break the build when risk thresholds are exceeded.
+
+<details>
+<summary> Click to view Node.js & Debian OS Vulnerabilities Proof</summary>
+
+Here is the automated Trivy report highlighting out-of-bounds reads and memory safety flaws within the base image dependencies:
+
+![Node.js Scan](https://github.com/cbrkrtek/owasp-juice-shop-devsecops-ci-cd/blob/main/pictures%20for%20README/node%20js%20scan.PNG)
+![Debian Scan](https://github.com/cbrkrtek/owasp-juice-shop-devsecops-ci-cd/blob/main/pictures%20for%20README/result%20of%20scanning%20juiceshop%20via%20trivy.PNG)
+</details>
+
+<details>
+<summary> Click to view Trapped Hardcoded Secrets Proof</summary>
+
+The pipeline successfully prevented credential leakage by capturing pre-baked secrets inside the image:
+* **HIGH:** RSA Asymmetric Private Key (`insecurity.js`)
+* **MEDIUM:** Hardcoded JWT Token (`app.guard.spec.ts`)
+
+![Secrets Scan 1](https://github.com/cbrkrtek/owasp-juice-shop-devsecops-ci-cd/blob/main/pictures%20for%20README/secrets%20scanning%20of%20juice%20shop.PNG)
+![Secrets Scan 2](https://github.com/cbrkrtek/owasp-juice-shop-devsecops-ci-cd/blob/main/pictures%20for%20README/scanning%20token%20secrets%20of%20juice%20shop.PNG)
+</details>
 
 ---
 
-## How to Explore
+## Phase 2: Dynamic Testing & Proof-of-Concept (PoC) Exploitation
 
-1. **Check the GitHub Actions Tab:** Navigate to the "Actions" tab in this repository to see the security checks running in real-time.
-2. **Review Configuration:** * Check `.github/workflows/devsecops-pipeline.yml` to see how scanners are declared as code.
+Moving beyond automated static scans, we performed **DAST (Dynamic Application Security Testing)** via **OWASP ZAP** combined with manual exploitation to prove real-world business impact.
+
+### Case Study 1: SQL Injection (SQLi) Auth Bypass
+* **Vulnerability:** Unescaped input concatenation in the authentication endpoint (CWE-89).
+* **Impact:** **CRITICAL** (Full account takeover).
+
+During ZAP probing on `POST /rest/user/login`, the application leaked raw SQLite query failures upon receiving a single quote (`'`). 
+
+#### Exploitation Steps:
+By injecting the comment vector `' OR 1=1 --` into the Email input field, the database query syntax was altered to bypass the password check completely, logging the attacker into the first database record (the **Administrator** account).
+
+<details>
+<summary>📸 View ZAP SQLi Alert Evidence</summary>
+
+![SQLi Proof](https://github.com/cbrkrtek/owasp-juice-shop-devsecops-ci-cd/blob/main/pictures%20for%20README/SQLi%20in%20juice-shop.PNG)
+</details>
+
+### Case Study 2: Permissive CORS & Missing CSP Headers
+* **Vulnerability:** Wildcard origin reflection (`Access-Control-Allow-Origin: *`) paired with a complete absence of a `Content-Security-Policy` header.
+* **Impact:** **HIGH** (Session Hijacking via Stored XSS).
+
+#### Exploitation Steps:
+1. **CORS Bypass:** The `*` configuration enables unauthorized scripts from third-party malicious sites (e.g., `evil.com`) to extract authenticated data from the victim's session.
+2. **Stored XSS via CSP Bypass:** By bypassing frontend validation, an attacker can register an account with a malicious payload embedded as their email: `<iframe src="javascript:alert('XSS')">@gmail.com`. Because there is no CSP header to enforce boundaries, the browser executes this inline script whenever the user profile is viewed, allowing silent exfiltration of session tokens via `document.cookie`.
+
+<details>
+<summary>📸 View CORS & Missing CSP Evidence</summary>
+
+![CORS and CSP Proof](https://github.com/cbrkrtek/owasp-juice-shop-devsecops-ci-cd/blob/main/pictures%20for%20README/Cross-Domain%20Misconfiguration%20in%20juice-shop.PNG)
+</details>
+
+---
+
+## Phase 3: Infrastructure Hardening & Remediation
+
+As DevSecOps engineers, we mitigated these runtime application flaws **at the infrastructure layer** without rewriting the application source code.
+
+### 1. Reverse Proxy Hardening (`nginx.conf`)
+We engineered an NGINX layer to intercept traffic and append robust security controls:
+
+```nginx
+add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline';" always;
+add_header Access-Control-Allow-Origin "[https://trusted-domain.com](https://trusted-domain.com)" always;
+```
+
+### 2. CI/CD 
+The pipeline now actively rejects commits introducing new container-level vulnerabilities, enforcing security hygiene before code ever reaches deployment stages.

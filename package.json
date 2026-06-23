@@ -1,0 +1,8 @@
+{
+  "name": "juice-shop-vulnerable-demo",
+  "version": "1.0.0",
+  "dependencies": {
+    "express": "4.16.0",
+    "jsonwebtoken": "8.5.1"
+  }
+}

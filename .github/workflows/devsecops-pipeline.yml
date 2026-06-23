@@ -15,14 +15,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Run Trivy SCA scan
-        uses: aquasecurity/trivy-action@915b19bbe73b92a6cf82a1bc12b087c9a19a5fe2
-        with:
-          scan-type: 'fs'
-          scan-ref: '.'
-          format: 'table'
-          severity: 'HIGH,CRITICAL'
-          exit-code: '0'
+      - name: Run Trivy SCA scan (Direct)
+        run: |
+          wget https://github.com/aquasecurity/trivy/releases/download/v0.51.1/trivy_0.51.1_Linux-64bit.deb
+          sudo dpkg -i trivy_0.51.1_Linux-64bit.deb
+          trivy fs --severity HIGH,CRITICAL --exit-code 0 --format table .
 
       - name: Run Semgrep SAST scan
         uses: returntocorp/semgrep-action@v1

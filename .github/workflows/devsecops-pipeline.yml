@@ -1,9 +1,11 @@
 name: CI/CD pipeline of OWASP Juice Shop
 on:
   push:
-    branches:["main"]
+    branches:
+      - main
   pull_request:
-    branches:["main"]
+    branches:
+      - main
 
 jobs:
   security-scans:

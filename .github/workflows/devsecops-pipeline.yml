@@ -22,8 +22,9 @@ jobs:
       - name: Run Complete Trivy Scan on Juice Shop Image
         run: |
           trivy image \
-            --scanners vuln,secret,config \
-            --severity HIGH,CRITICAL, MEDIUM \
+            --scanners vuln,secret \
+            --image-config-scanners misconfig \
+            --severity MEDIUM,HIGH,CRITICAL \
             --exit-code 0 \
             --format table \
             bkimminich/juice-shop:latest

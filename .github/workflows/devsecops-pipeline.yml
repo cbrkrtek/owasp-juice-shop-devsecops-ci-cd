@@ -23,7 +23,7 @@ jobs:
         run: |
           trivy image \
             --scanners vuln,secret,config \
-            --severity HIGH,CRITICAL \
+            --severity HIGH,CRITICAL, MEDIUM \
             --exit-code 0 \
             --format table \
             bkimminich/juice-shop:latest

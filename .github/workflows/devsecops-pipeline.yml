@@ -8,6 +8,10 @@ on:
     branches:
       - main
 
+permissions:
+  security-events: write
+  contents: read
+
 jobs:
   juice-shop-security:
     runs-on: ubuntu-latest
@@ -29,6 +33,77 @@ jobs:
             --exit-code 0 \
             --format table \
             bkimminich/juice-shop:latest
+
+      
+      - name: Generate SARIF Report
+        run: |
+          trivy image \
+            --scanners vuln,secret \
+            --severity MEDIUM,HIGH,CRITICAL \
+            --exit-code 0 \
+            --format sarif \
+            --output trivy-results.sarif \
+            bkimminich/juice-shop:latest
+
+      - name: Upload SARIF to GitHub Security Tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: trivy-results.sarif
+          category: trivy-container-scan
+
+      
+      - name: Generate SBOM (CycloneDX)
+        run: |
+          trivy image \
+            --format cyclonedx \
+            --output sbom-cyclonedx.json \
+            bkimminich/juice-shop:latest
+
+      - name: Upload SBOM Artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sbom-cyclonedx
+          path: sbom-cyclonedx.json
+          retention-days: 30
+
+      
+      - name: Start Juice Shop for DAST
+        run: |
+          docker run -d \
+            --name juice-shop \
+            -p 3000:3000 \
+            bkimminich/juice-shop:latest
+          echo "Waiting for Juice Shop to be ready..."
+          sleep 20
+
+      - name: Run OWASP ZAP Baseline Scan
+        run: |
+          docker run --rm \
+            --network host \
+            -v $(pwd)/zap-reports:/zap/wrk/:rw \
+            ghcr.io/zaproxy/zaproxy:stable \
+            zap-baseline.py \
+            -t http://localhost:3000 \
+            -r zap-report.html \
+            -J zap-report.json \
+            -I
+        continue-on-error: true  
+
+      - name: Upload ZAP HTML Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: zap-dast-report
+          path: |
+            zap-reports/zap-report.html
+            zap-reports/zap-report.json
+          retention-days: 30
+
+      - name: Stop Juice Shop Container
+        if: always()
+        run: docker stop juice-shop || true
 
       
       - name: Enforce Quality Gate (Fail on CRITICAL)

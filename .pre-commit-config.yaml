@@ -1,0 +1,36 @@
+repos:
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        name: "Secret Detection"
+        args:
+          - "--baseline"
+          - ".secrets.baseline"
+        exclude: |
+          (?x)^(
+            \.secrets\.baseline|
+            package-lock\.json|
+            .*\.trivyignore
+          )$
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+        name: "Trailing Whitespace..."
+      - id: end-of-file-fixer
+        name: "End of File Fixer..."
+      - id: check-yaml
+        name: "YAML Syntax Check..."
+      - id: check-added-large-files
+        name: "Large File Check..."
+        args: ["--maxkb=1000"]
+      - id: detect-private-key
+        name: "Private Key Detection..."
+
+  - repo: https://github.com/IamTheFij/docker-pre-commit
+    rev: v3.0.1
+    hooks:
+      - id: docker-compose-check
+        name: "Docker Compose Syntax Check..."

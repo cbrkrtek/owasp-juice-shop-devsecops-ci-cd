@@ -1,0 +1,49 @@
+# .trivyignore
+# ============================================================
+# Accepted Risk Register — OWASP Juice Shop DevSecOps Demo
+# ============================================================
+# Format: CVE-ID
+# Each entry MUST have a justification comment above it.
+# Reviewed: 2025-01 | Next review: 2025-07
+# Owner: @your-github-username
+# ============================================================
+
+# [ACCEPTED] HTTP/2 Rapid Reset Attack (CVE-2023-44487)
+# Severity: CRITICAL | Component: Node.js runtime (base image)
+# Justification: Juice Shop in this demo environment is NOT exposed
+# to the public internet. NGINX proxy does not forward HTTP/2 upstream.
+# Risk: LOW in current architecture.
+# Reference: https://nvd.nist.gov/vuln/detail/CVE-2023-44487
+CVE-2023-44487
+
+# [ACCEPTED] runc container escape via /proc/self/exe (CVE-2024-21626)
+# Severity: CRITICAL | Component: runc (container runtime)
+# Justification: Docker Compose config uses no privileged mode,
+# no host PID namespace, no writable host volume mounts.
+# Attack requires local access to container host — not applicable in CI/CD.
+# Reference: https://nvd.nist.gov/vuln/detail/CVE-2024-21626
+CVE-2024-21626
+
+# [ACCEPTED] OpenSSL timing oracle in RSA decryption (CVE-2022-4304)
+# Severity: HIGH | Component: openssl (Debian base layer)
+# Justification: No TLS termination occurs at the application layer.
+# TLS is handled upstream by NGINX which uses a patched openssl version.
+# Residual risk from base image layer only.
+# Reference: https://nvd.nist.gov/vuln/detail/CVE-2022-4304
+CVE-2022-4304
+
+# [ACCEPTED] Hardcoded RSA Private Key in insecurity.js
+# Severity: HIGH | Component: Juice Shop application (intentional)
+# Justification: This is a DELIBERATE vulnerability placed by OWASP
+# Juice Shop authors for educational purposes. Not a real credential.
+# Documented as pipeline finding in Security Executive Summary.
+# Reference: https://github.com/juice-shop/juice-shop (design decision)
+# Note: This suppresses the secret finding in non-enforcement scans only.
+# The Quality Gate step still uses --exit-code 1 for CRITICAL vulns.
+OWASP-Juice-Shop-Hardcoded-Key
+
+# ============================================================
+# DO NOT ADD entries without a justification comment.
+# DO NOT ADD entries to suppress Quality Gate enforcement.
+# All accepted risks must be reviewed every 6 months.
+# ============================================================

@@ -63,8 +63,8 @@ A **production-ready DevSecOps security architecture** built around OWASP Juice 
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/YOUR_USERNAME/YOUR_REPO.git
-cd YOUR_REPO
+git clone https://github.com/cbrkrtek/owasp-juice-shop-devsecops-ci-cd.git
+cd owasp-juice-shop-devsecops-ci-cd
 
 # 2. Start the hardened stack
 docker compose up -d
@@ -85,9 +85,9 @@ Juice Shop runs on port 3000 internally but is **only accessible through the NGI
 │   └── workflows/
 │       └── devsecops-pipeline.yml   # Main CI/CD security pipeline
 ├── .pre-commit-config.yaml          # Local secret detection hooks
-├── .secrets.baseline                # detect-secrets baseline (run once)
 ├── .trivyignore                     # Accepted risk register with justifications
 ├── docker-compose.yml               # Orchestration: Juice Shop + NGINX
+├── package.json                     # Json-versions of Juice Shop
 └── nginx.conf                       # Hardened reverse proxy configuration
 ```
 
